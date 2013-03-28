@@ -7,8 +7,16 @@ I created this plugin for a local client (http://lethmixedslowpitch.com) and at 
 
 TODO (lots):
 
-* Write code to generate database.
 * Remove instances of "LMSA" and make this customizable or just generic.
 * Add ability to specify number of divisions (this is hardcoded in right now)
 
 * More...
+
+To Use
+======
+
+The following shortcodes are used to display content:
+
+* [print_teams division="A"] - attribute: division is required
+* [print_scores division="A"] - attribute: division is required
+* [print_standings division="A"] - attribuite: division is required
