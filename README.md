@@ -7,8 +7,8 @@ I created this plugin for a local client (http://lethmixedslowpitch.com) and at 
 
 TODO (lots):
 
-Write code to generate database.
-Remove instances of "LMSA" and make this customizable or just generic.
-Add ability to specify number of divisions (this is hardcoded in right now)
+* Write code to generate database.
+* Remove instances of "LMSA" and make this customizable or just generic.
+* Add ability to specify number of divisions (this is hardcoded in right now)
 
-More...
+* More...
