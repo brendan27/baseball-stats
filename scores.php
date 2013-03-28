@@ -12,6 +12,53 @@ Version: 0.1
 Author URI: http://polluxtechnology.com
 */
 
+global $baseball_stats_db_version;
+$baseball_stats_db_version='1.0';
+
+function db_install() {
+	global $wpdb, $baseball_stats_db_version;
+
+	$table1_name = $wpdb->prefix.'lmsa_games';
+	$table2_name = $wpdb->prefix.'lmsa_teams';
+
+	$sql1 = "CREATE TABLE $table1_name (
+		id int(4) unsigned NOT NULL AUTO_INCREMENT,
+		home_team int(4) unsigned NOT NULL,
+		away_team int(4) unsigned NOT NULL,
+		datetime datetime DEFAULT NULL,
+		diamond int(2) DEFAULT NULL,
+		home_score int(2) DEFAULT NULL,
+		away_score int(2) DEFAULT NULL,
+		forfeit tinyint(1) DEFAULT '0',
+		PRIMARY KEY  (id)
+	) ENGINE=InnoDB;";
+
+	$sql2 = "CREATE TABLE $table2_name (
+		id int(4) unsigned NOT NULL AUTO_INCREMENT,
+		team_number int(4) DEFAULT NULL,
+		name varchar(200) DEFAULT NULL,
+		division varchar(50) DEFAULT NULL,
+		pts int(4) DEFAULT NULL,
+		contact_name_one varchar(50) DEFAULT NULL,
+		contact_phone_one bigint(10) DEFAULT NULL,
+		contact_altphone_one bigint(10) DEFAULT NULL,
+		contact_email_one varchar(50) DEFAULT NULL,
+		contact_name_two varchar(50) DEFAULT NULL,
+		contact_phone_two bigint(10) DEFAULT NULL,
+		contact_altphone_two bigint(10) DEFAULT NULL,
+		contact_email_two varchar(50) DEFAULT NULL,
+		PRIMARY KEY  (id)
+	) ENGINE=InnoDB;";
+
+	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+	dbDelta( $sql1 );
+	dbDelta( $sql2 );
+
+	add_option('baseball_stats_db_version',$baseball_stats_db_version);
+}
+
+register_activation_hook( __FILE__, 'db_install' );
+
 function lmsa_scores_settings() {
 	register_setting( 'myplugin', 'myplugin_setting_1', 'intval' );
     register_setting( 'myplugin', 'myplugin_setting_2', 'intval' );
