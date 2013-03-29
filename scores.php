@@ -13,9 +13,18 @@ Author URI: http://polluxtechnology.com
 */
 
 global $baseball_stats_db_version;
-$baseball_stats_db_version='1.0';
+$baseball_stats_db_version='1.1';
 
-function db_install() {
+function baseball_stats_db_check() {
+    global $baseball_stats_db_version;
+    if (get_site_option( 'baseball_stats_db_version' ) != $baseball_stats_db_version) {
+        baseball_stats_db_install();
+    }
+}
+
+add_action( 'plugins_loaded', 'baseball_stats_db_check' );
+
+function baseball_stats_db_install() {
 	global $wpdb, $baseball_stats_db_version;
 
 	$table1_name = $wpdb->prefix.'lmsa_games';
@@ -30,6 +39,7 @@ function db_install() {
 		home_score int(2) DEFAULT NULL,
 		away_score int(2) DEFAULT NULL,
 		forfeit tinyint(1) DEFAULT '0',
+		deleted timestamp NULL DEFAULT NULL,
 		PRIMARY KEY  (id)
 	) ENGINE=InnoDB;";
 
@@ -54,10 +64,10 @@ function db_install() {
 	dbDelta( $sql1 );
 	dbDelta( $sql2 );
 
-	add_option('baseball_stats_db_version',$baseball_stats_db_version);
+	update_option('baseball_stats_db_version',$baseball_stats_db_version);
 }
 
-register_activation_hook( __FILE__, 'db_install' );
+register_activation_hook( __FILE__, 'baseball_stats_db_install' );
 
 function lmsa_scores_settings() {
 	register_setting( 'myplugin', 'myplugin_setting_1', 'intval' );
