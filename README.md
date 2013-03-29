@@ -9,6 +9,7 @@ TODO (lots):
 
 * Remove instances of "LMSA" and make this customizable or just generic.
 * Add ability to specify number of divisions (this is hardcoded in right now)
+* Should add some kind of caching so we don't perform so many calculations for print_standings(). We could regenerate the cache each time a game is updated.
 
 * More...
 
