@@ -20,3 +20,4 @@ The following shortcodes are used to display content:
 * [print_teams division="A"] - attribute: division is required
 * [print_scores division="A"] - attribute: division is required
 * [print_standings division="A"] - attribuite: division is required
+* [division_leaders] - no required attributes. This shortcode displays a table of leaders for each division.
