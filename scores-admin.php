@@ -65,12 +65,15 @@ class Scores_List_Table extends WP_List_Table {
 		$screen = get_current_screen();
 
 		/* -- Preparing your query -- */
-	        $query = 'SELECT '.$wpdb->prefix.'lmsa_games.* FROM '.$wpdb->prefix.'lmsa_games';
+	        $query = 'SELECT '.$wpdb->prefix.'lmsa_games.* ';
+	        $query.= 'FROM '.$wpdb->prefix.'lmsa_games, '.$wpdb->prefix.'lmsa_teams ';
+	        $query.= 'WHERE deleted IS NULL AND '.$wpdb->prefix.'lmsa_games.home_team = '.$wpdb->prefix.'lmsa_teams.id';
 
 	    /* -- Check division in query string -- */
 
-		    $filterdivision = !empty($_GET["div"]) ? $wpdb->prefix.'lmsa_teams.division = "'.mysql_real_escape_string($_GET["div"]).'" AND '.$wpdb->prefix.'lmsa_games.home_team = '.$wpdb->prefix.'lmsa_teams.id' : '';
-		    if(!empty($filterdivision)){ $query.=', '.$wpdb->prefix.'lmsa_teams WHERE '.$filterdivision; }
+		    if (!empty($_GET["div"])) {
+		    	$query.= ' AND '.$wpdb->prefix.'lmsa_teams.division = "'.mysql_real_escape_string($_GET["div"]);
+		    }
 
 		/* -- Ordering parameters -- */
 		    //Parameters that are going to be used to order the result
@@ -306,10 +309,21 @@ function add_game() {
 function delete_game() {
 	global $wpdb;
 
-	$success = $wpdb->query( $wpdb->prepare( "
-		DELETE FROM ".$wpdb->prefix."lmsa_games 
-		WHERE id = %d", 
-        $_POST['id'] ) );
+	$success = $wpdb->update(
+		$wpdb->prefix.'lmsa_games',
+		array(
+			'deleted'=>date_i18n("Y-m-d H:i:s") //string
+		),
+		array(
+			'id'=>$_POST['id'] //string
+		),
+		array(
+			'%s',
+		),
+		array(
+			'%d'
+		)
+	);
 	
 	return $success;
 }

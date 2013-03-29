@@ -216,7 +216,7 @@ function set_games_query($division,$team_id=NULL) {
 				
 	$query = 'SELECT '.$pre.'games.* ';
 	$query.= 'FROM '.$pre.'games,'.$pre.'teams ';
-	$query.= 'WHERE '.$pre.'games.home_team = '.$pre.'teams.id AND '.$pre.'teams.division = "'.$division.'" ';
+	$query.= 'WHERE deleted IS NULL AND '.$pre.'games.home_team = '.$pre.'teams.id AND '.$pre.'teams.division = "'.$division.'" ';
 	if (isset($team_id)) {//only get the games played by a certain team, this causes a prepared query to be needed.
 		$query.= 'AND ('.$pre.'games.home_team = %d OR '.$pre.'games.away_team = %d)';
 	}
