@@ -572,7 +572,7 @@ function select_a_team($name,$team_id='',$division='') {
 
 function submit_score($atts) {
 	extract(shortcode_atts(array(
-		'email_to' => ''
+		'email_to' => get_option('admin_email')
     ), $atts));
 
     if ($_POST['submit_score'] && !empty($_POST['math_entry']) && ($_POST['math_answer'] == $_POST['math_entry'])) {
