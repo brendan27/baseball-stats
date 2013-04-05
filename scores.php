@@ -416,6 +416,7 @@ function print_standings($atts) {
 				</tr>
 				<?php
 				/*echo */update_pts($team->id,$pts);
+				//This is a bad place for this to be. This can very easily be moved to run after a game score is updated instead.
 			}
 			?>
 		</tbody>
