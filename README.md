@@ -22,3 +22,4 @@ The following shortcodes are used to display content:
 * [print_scores division="A"] - attribute: division is required
 * [print_standings division="A"] - attribute: division is required
 * [division_leaders] - no required attributes. This shortcode displays a table of leaders for each division.
+* [submit_score email_to="email@website.com"] - attribute: email_to defaults to the WP site admin.
