@@ -194,10 +194,10 @@ function edit_team_form($team_id=false) {
 				        <th><label for="name">Team Name</label></th>
 				        <td><input id="name" type="text" name="name" value="<?=$team->name?>" required="required" /></td>    
 		            </tr>
-		        	<tr class="form-field"
-		        		<?php /* we don't want to allow changing of divisions, only selecting a brand new one for a new team */ if ($_GET['edit'] == 1) { echo ' style="display:none"'; } ?>
-		        	>
-				        <th><label for="division">Division</label></th>
+		        	<tr class="form-field">
+				        <th><label for="division">Division
+		        		<?php if ($_GET['edit'] == 1) { echo ' - division should not be changed once the schedule is posted.'; } ?>
+		        	</label></th>
 				        <td><?php select_division($team->division); ?></td>    
 		            </tr>
 		        	<tr class="form-field">
