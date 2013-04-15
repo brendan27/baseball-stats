@@ -412,7 +412,7 @@ function print_standings($atts) {
 				<td class="textalignright"><?=$ra?></td>
 				<td class="textalignright"><?=$rfa=$rf-$ra?></td>
 				<td class="textalignright"><?=$pts=$w*2+$t?></td>
-				<td class="textalignright"><?=number_format($w/$gp,3)?></td>
+				<td class="textalignright"><?=$gp!=0?number_format($w/$gp,3):'0.000'?></td>
 				</tr>
 				<?php
 				/*echo */update_pts($team->id,$pts);
