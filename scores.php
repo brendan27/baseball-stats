@@ -393,8 +393,8 @@ function print_standings($atts) {
 					else if ($them>$us){
 						$l+=1;
 					}
-					//if they neither won nor lost, then tie.
-					else {
+					//if they neither won nor lost and both fields contain a number (a score has in fact been submitted), then tie.
+					else if (!empty($them) && !empty($us)) {
 						$t+=1;
 					}
 
