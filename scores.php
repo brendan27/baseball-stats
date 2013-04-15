@@ -427,6 +427,10 @@ function print_standings($atts) {
 
 add_shortcode('print_standings','print_standings');
 
+function cap($string) {
+	return ucwords(strtolower($string));
+}
+
 function print_teams($atts) {
 	global $wpdb;
 	extract(shortcode_atts(array(
@@ -434,6 +438,38 @@ function print_teams($atts) {
 	),$atts));
 
 	$division = strtoupper($division);
+
+	/*Just a hack to uncapitalize all of the entries
+	//
+	//
+
+	$teams = $wpdb->get_results('SELECT * FROM wp_lmsa_teams');
+
+	foreach ($teams as $team) {
+		$wpdb->update( 
+			'wp_lmsa_teams', 
+			array( 
+				'name' => cap($team->name),	// string
+				'contact_name_one' => cap($team->contact_name_one),
+				'contact_name_two' => cap($team->contact_name_two),
+				'contact_email_one' => strtolower($team->contact_email_one),
+				'contact_email_two' => strtolower($team->contact_email_two),
+			), 
+			array( 'ID' => $team->id ), 
+			array( 
+				'%s',	// value1
+				'%s',	// value2
+				'%s',	// value3
+				'%s',	// value4
+				'%s'	// value5
+			), 
+			array( '%d' ) 
+		);
+	}
+
+	// end of hack
+	//
+	*/
 
 	?>
 	<h2>Division <?=$division?></h2>
