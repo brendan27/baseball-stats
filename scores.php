@@ -297,10 +297,13 @@ function print_games($atts) {
 					if ($game->home_score<$game->away_score){
 						$away_win=1;
 					}
+					if( current_user_can( 'edit_posts' ) ) {
+						$edit_button='<br/><a href="' . admin_url('admin.php?page=scores-admin&edit=1&id=' . $game->id) . '">[Edit Game/Submit Score]</a>';
+					}
 					?>
 					
 					<tr>
-						<td><?=date('D M jS, g:i A',strtotime($game->datetime))?></td>
+						<td><?php echo date('D M jS, g:i A',strtotime($game->datetime)) . $edit_button; ?></td>
 						<td><?=$game->diamond?></td>
 						<td<?=isset($home_win) ? ' class="win"' : ''?>><?php if (! isset($_GET['team'])) { ?><a href="<?php echo the_permalink() ?>?team=<?php echo $game->home_team; ?>"><?php } ?><?php echo get_team_name($game->home_team)?><?php if (! isset($_GET['team'])) { ?></a><?php } ?><span class="alignright"><?php echo $game->home_score ?><span></td>
 						<td<?=isset($away_win) ? ' class="win"' : ''?>><?php if (! isset($_GET['team'])) { ?><a href="<?php echo the_permalink() ?>?team=<?php echo $game->away_team; ?>"><?php } ?><?php echo get_team_name($game->away_team)?><?php if (! isset($_GET['team'])) { ?></a><?php } ?><span class="alignright"><?php echo $game->away_score?></span></td>
