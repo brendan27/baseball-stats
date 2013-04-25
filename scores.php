@@ -13,7 +13,7 @@ Author URI: http://polluxtechnology.com
 */
 
 global $baseball_stats_db_version;
-$baseball_stats_db_version='1.1';
+$baseball_stats_db_version='1.2';
 
 function baseball_stats_db_check() {
     global $baseball_stats_db_version;
@@ -57,6 +57,14 @@ function baseball_stats_db_install() {
 		contact_phone_two bigint(10) DEFAULT NULL,
 		contact_altphone_two bigint(10) DEFAULT NULL,
 		contact_email_two varchar(50) DEFAULT NULL,
+		gp int(4) DEFAULT NULL,
+		w int(4) DEFAULT NULL,
+		l int(4) DEFAULT NULL,
+		t int(4) DEFAULT NULL,
+		rf int(4) DEFAULT NULL,
+		ra int(4) DEFAULT NULL,
+		rfa int(4) DEFAULT NULL,
+		pct decimal(3,3) DEFAULT NULL,
 		PRIMARY KEY  (id)
 	) ENGINE=InnoDB;";
 
@@ -208,7 +216,7 @@ function get_division($id=false) {
 /*
 * select everything from the games table, where the division (retrieved from home team in teams table) is equal to the division set in the shortcode attribute
 */
-function set_games_query($division,$team_id=NULL) {
+function set_games_query($division='',$team_id=NULL) {
 	global $wpdb;
 
 	$lmsa_prefix = 'lmsa_';
@@ -216,9 +224,10 @@ function set_games_query($division,$team_id=NULL) {
 				
 	$query = 'SELECT '.$pre.'games.* ';
 	$query.= 'FROM '.$pre.'games,'.$pre.'teams ';
-	$query.= 'WHERE deleted IS NULL AND '.$pre.'games.home_team = '.$pre.'teams.id AND '.$pre.'teams.division = "'.$division.'" ';
+	$query.= 'WHERE deleted IS NULL AND '.$pre.'games.home_team = '.$pre.'teams.id ';
+	$query.= $division?'AND '.$pre.'teams.division = "'.$division.'" ':'';
 	if (isset($team_id)) {//only get the games played by a certain team, this causes a prepared query to be needed.
-		$query.= 'AND ('.$pre.'games.home_team = %d OR '.$pre.'games.away_team = %d)';
+		$query.= 'AND ('.$pre.'games.home_team = %d OR '.$pre.'games.away_team = %d) ';
 	}
 	$query.='ORDER BY '.$pre.'games.datetime';
 	return $query;
@@ -335,6 +344,114 @@ function print_games($atts) {
 
 add_shortcode('print_games','print_games');
 
+function generate_standings() {
+	global $wpdb;
+
+	$lmsa_prefix = 'lmsa_';
+	$pre = $wpdb->prefix.$lmsa_prefix;
+
+	//select everything from the games table, where the division (retrieved from home team in teams table) is equal to the division set in the shortcode attribute
+	
+	$teams_query = 'SELECT id, name, division FROM '.$pre.'teams';
+
+	//echo $teams_query;
+
+	// loop through teams in division
+	$teams = $wpdb->get_results($teams_query);
+	foreach ($teams as $team) {
+
+		//reset variables
+		$w=0;
+		$l=0;
+		$t=0;
+		$rf=0;
+		$ra=0;
+		$pts=0;
+		$pct=0;
+		$rfa=0;
+		
+		$games_query = set_games_query('',$team->id);
+
+		$games_prepared_query = $wpdb->prepare($games_query,$team->id,$team->id);
+
+		$games = $wpdb->get_results($games_prepared_query,OBJECT);
+		foreach ($games as $game) {
+			$home_score=$game->home_score;
+			$away_score=$game->away_score;
+			$home_team=$game->home_team;
+			$away_team=$game->away_team;
+
+			//check if current team was home or away
+			if ($home_team == $team->id) {
+				$us=$home_score;
+				$them=$away_score;
+			}
+			if ($away_team == $team->id) {
+				$us=$away_score;
+				$them=$home_score;
+			}
+			//check "us" beat "them"
+			if ($us>$them){
+				$w+=1;
+			}
+			//check if home team lost
+			else if ($them>$us){
+				$l+=1;
+			}
+			//if they neither won nor lost and both fields contain a number (a score has in fact been submitted), then tie.
+			else if (!empty($them) && !empty($us)) {
+				$t+=1;
+			}
+
+			$rf+=$us;
+			$ra+=$them;
+		}
+		
+		$gp=$w+$l+$t;
+		$rfa=$rf-$ra;
+		$pts=$w*2+$t;
+		$pct=$gp!=0?number_format($w/$gp,3):'0.000';
+
+		$success = $wpdb->update(
+			$wpdb->prefix.'lmsa_teams',
+			array(
+				'pts'=>$pts, //integer
+				'gp'=>$gp, //integer
+				'w'=>$w, //integer
+				'l'=>$l, //integer
+				't'=>$t, //integer
+				'rf'=>$rf, //integer
+				'ra'=>$ra, //integer
+				'rfa'=>$rfa, //integer
+				'pct'=>$pct // decimal
+			),
+			array(
+				'id'=>$team->id //integer
+			),
+			array(
+				'%d',
+				'%d',
+				'%d',
+				'%d',
+				'%d',
+				'%d',
+				'%d',
+				'%d',
+				'%s'
+			),
+			array(
+				'%d'
+			)
+		);
+
+		$return=true;
+		if (!$success) {
+			$return=false;
+		}
+	}
+	return $return;
+}
+
 function print_standings($atts) {
 	global $wpdb;
 	extract(shortcode_atts(array(
@@ -366,76 +483,24 @@ function print_standings($atts) {
 			$pre = $wpdb->prefix.$lmsa_prefix;
 			
 			//select everything from the games table, where the division (retrieved from home team in teams table) is equal to the division set in the shortcode attribute
-			$teams_query = 'SELECT id, name, division FROM '.$pre.'teams WHERE division = "'.$division.'" ORDER BY pts DESC';
+			$teams_query = 'SELECT * FROM '.$pre.'teams WHERE division = "'.$division.'" ORDER BY pts DESC';
 
-			//echo $teams_query;
-			
 			// loop through teams in division
 			$teams = $wpdb->get_results($teams_query,OBJECT);
-			foreach ($teams as $team) {
-				//reset variables
-				$w=0;
-				$l=0;
-				$t=0;
-				$rf=0;
-				$ra=0;
-				$pts=0;
-				$pct=0;
-				$rfa=0;
-				
-				$games_query = set_games_query($division,$team->id);
-				//echo $games_query;
-				//I am not 100% sure, but I think this is the time to use a prepared query since this query is run for hundreds of games for many teams (as many as are in the division).
-				$games_prepared_query = $wpdb->prepare($games_query,$team->id,$team->id);
-
-				$games = $wpdb->get_results($games_prepared_query,OBJECT);
-				foreach ($games as $game) {
-					$home_score=$game->home_score;
-					$away_score=$game->away_score;
-					$home_team=$game->home_team;
-					$away_team=$game->away_team;
-
-					//check if current team was home or away
-					if ($home_team == $team->id) {
-						$us=$home_score;
-						$them=$away_score;
-					}
-					if ($away_team == $team->id) {
-						$us=$away_score;
-						$them=$home_score;
-					}
-					//check "us" beat "them"
-					if ($us>$them){
-						$w+=1;
-					}
-					//check if home team lost
-					else if ($them>$us){
-						$l+=1;
-					}
-					//if they neither won nor lost and both fields contain a number (a score has in fact been submitted), then tie.
-					else if (!empty($them) && !empty($us)) {
-						$t+=1;
-					}
-
-					$rf+=$us;
-					$ra+=$them;
-				}
-				?>
+			foreach ($teams as $team) { ?>
 				<tr>
-				<td><?=$team->name?></td>
-				<td class="textalignright"><?=$gp=$w+$l+$t?></td>
-				<td class="textalignright"><?=$w?></td>
-				<td class="textalignright"><?=$l?></td>
-				<td class="textalignright"><?=$t?></td>
-				<td class="textalignright"><?=$rf?></td>
-				<td class="textalignright"><?=$ra?></td>
-				<td class="textalignright"><?=$rfa=$rf-$ra?></td>
-				<td class="textalignright"><?=$pts=$w*2+$t?></td>
-				<td class="textalignright"><?=$gp!=0?number_format($w/$gp,3):'0.000'?></td>
+					<td><?=$team->name?></td>
+					<td class="textalignright"><?=$team->gp?></td>
+					<td class="textalignright"><?=$team->w?></td>
+					<td class="textalignright"><?=$team->l?></td>
+					<td class="textalignright"><?=$team->t?></td>
+					<td class="textalignright"><?=$team->rf?></td>
+					<td class="textalignright"><?=$team->ra?></td>
+					<td class="textalignright"><?=$team->rfa?></td>
+					<td class="textalignright"><?=$team->pts?></td>
+					<td class="textalignright"><?=$team->pct?></td>
 				</tr>
 				<?php
-				/*echo */update_pts($team->id,$pts);
-				//This is a bad place for this to be. This can very easily be moved to run after a game score is updated instead.
 			}
 			?>
 		</tbody>

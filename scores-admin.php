@@ -278,6 +278,7 @@ function edit_game() {
 			'%d'
 		)
 	);
+
 	return $success;
 }
 
@@ -338,6 +339,7 @@ function delete_game() {
 	if ($_POST['edit_game'] || $_POST['add_game'] || $_POST['delete_game']) {
 		if ($_POST['edit_game']) {
 			$success = edit_game();
+			$generated = generate_standings();
 		}
 		if ($_POST['add_game']) {
 			$success = add_game();
