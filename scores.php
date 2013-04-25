@@ -289,7 +289,11 @@ function print_games($atts) {
 				
 				foreach ($games as $game) {
 				
-				//check winner
+					//variables
+					$home_name = get_team_name($game->home_team);
+					$away_name = get_team_name($game->away_team);
+
+					//check winner
 					unset($home_win, $away_win);
 					if ($game->home_score>$game->away_score){
 						$home_win=1;
@@ -298,15 +302,27 @@ function print_games($atts) {
 						$away_win=1;
 					}
 					if( current_user_can( 'edit_posts' ) ) {
-						$edit_button='<br/><a href="' . admin_url('admin.php?page=scores-admin&edit=1&id=' . $game->id) . '">[Edit Game/Submit Score]</a>';
+						$edit_btn='<br/><a href="' . admin_url('admin.php?page=scores-admin&edit=1&id=' . $game->id) . '">[Edit Game/Enter Score]</a>';
+					}
+
+					$submit_score_link=''; //reset
+
+					// If the game has not had a score entered yet
+					if (!$game->home_score && !$game->away_score) {
+						$submit_score_link = '<a title="Submit score for this game" href="' . site_url() . '/games/submit-score/';//TODO: this is specific to the current LMSA site
+						$submit_score_link.= '?datetime=' . urlencode($game->datetime);
+						$submit_score_link.= '&home_team=' . $game->home_team;
+						$submit_score_link.= '&away_team=' . $game->away_team;
+						$submit_score_link.= '&diamond=' . $game->diamond;
+						$submit_score_link.= '">&uarr;</a>';
 					}
 					?>
 					
 					<tr>
-						<td><?php echo date('D M jS, g:i A',strtotime($game->datetime)) . $edit_button; ?></td>
+						<td><?php echo date('D M jS, g:i A',strtotime($game->datetime)) . ' ' . $submit_score_link . $edit_btn; ?></td>
 						<td><?=$game->diamond?></td>
-						<td<?=isset($home_win) ? ' class="win"' : ''?>><?php if (! isset($_GET['team'])) { ?><a href="<?php echo the_permalink() ?>?team=<?php echo $game->home_team; ?>"><?php } ?><?php echo get_team_name($game->home_team)?><?php if (! isset($_GET['team'])) { ?></a><?php } ?><span class="alignright"><?php echo $game->home_score ?><span></td>
-						<td<?=isset($away_win) ? ' class="win"' : ''?>><?php if (! isset($_GET['team'])) { ?><a href="<?php echo the_permalink() ?>?team=<?php echo $game->away_team; ?>"><?php } ?><?php echo get_team_name($game->away_team)?><?php if (! isset($_GET['team'])) { ?></a><?php } ?><span class="alignright"><?php echo $game->away_score?></span></td>
+						<td<?=isset($home_win) ? ' class="win"' : ''?>><?php if (! isset($_GET['team'])) { ?><a href="<?php echo the_permalink() ?>?team=<?php echo $game->home_team; ?>"><?php } ?><?php echo $home_name ?><?php if (! isset($_GET['team'])) { ?></a><?php } ?><span class="alignright"><?php echo $game->home_score ?><span></td>
+						<td<?=isset($away_win) ? ' class="win"' : ''?>><?php if (! isset($_GET['team'])) { ?><a href="<?php echo the_permalink() ?>?team=<?php echo $game->away_team; ?>"><?php } ?><?php echo $away_name ?><?php if (! isset($_GET['team'])) { ?></a><?php } ?><span class="alignright"><?php echo $game->away_score?></span></td>
 					</tr>
 					<?php
 				}
@@ -563,11 +579,11 @@ function division_leaders() {
 
 add_shortcode('division_leaders','division_leaders');
 
-function select_date($name="datetime") {
+function select_date($select_name="datetime") {
 	global $wpdb;
 	$date_query = 'SELECT DISTINCT datetime FROM '.$wpdb->prefix.'lmsa_games ORDER BY datetime ASC';
 	$dates = $wpdb->get_results($date_query,OBJECT); ?>
-		<select id="<?php echo $name ?>" name="<?php echo $name ?>">
+		<select id="<?php echo $select_name ?>" name="<?php echo $select_name ?>">
 			<option value="">-- Select a Gametime --</option>
 		<?php
 		foreach ($dates as $date) {
@@ -577,9 +593,15 @@ function select_date($name="datetime") {
 			$today = date('Y-m-d');
 
 			//check to see if the current dropdown item is today (or if the form was submitted with a different date)
-			if ($_POST[$name]) {
-				$selected = $_POST[$name] == $nicedate ? 'selected="selected"' : '';
-			} else {
+			
+			echo 'get:' . $_GET[$select_name].'<br/>';
+			echo 'db:' . $date->datetime;
+
+			if ($_GET[$select_name] == $date->datetime ) {  // if query string contains date
+				$selected = 'selected="selected"';
+			} else if ($_POST[$select_name]) { // if the form has been submitted
+				$selected = $_POST[$select_name] == $nicedate ? 'selected="selected"' : '';
+			} else { // if today's date has a game date
 				$selected = $comparedate == $today ? 'selected="selected"' : '';
 			}
 			?>
@@ -588,7 +610,7 @@ function select_date($name="datetime") {
 		</select>
 <?php }
 
-function select_a_team($name,$team_id='',$division='') {
+function select_a_team($select_name,$team_id='',$division='') {
 	global $wpdb;
 	$query = 'SELECT id,name,division FROM '.$wpdb->prefix.'lmsa_teams';
 	$query.= !empty($division)?' WHERE division = "'.$division.'"' : ' ORDER BY division';
@@ -596,12 +618,23 @@ function select_a_team($name,$team_id='',$division='') {
 	$teams = $wpdb->get_results($query,OBJECT);
 	?>
 	
-	<select id="<?php echo $name ?>" name="<?php echo $name ?>">
+	<select id="<?php echo $select_name ?>" name="<?php echo $select_name ?>">
 		<option value="">-- Select a Team --</option>
 	<?php
 	foreach ($teams as $team) {
-		//check to see if the current dropdown item is the already submitted team for this game
-		$selected = $_POST[$name] == 'Division '.$team->division.' | '.$team->name ? 'selected="selected"' : '';
+		//check to see if the current dropdown item is the already submitted team for this game, or the team from the query string
+		
+		// testing
+		// echo "post: ".$_POST[$select_name]."</br>";
+		// echo 'value: Division '.$team->division.' | '.$team->name;
+		
+		if (
+			( $_GET[$select_name] == $team->id ) // query string contains team id
+			||
+			( stripslashes_deep( $_POST[$select_name] ) == 'Division '.$team->division.' | '.$team->name ) // form submitted with this team
+		) {
+			$selected = 'selected="selected"';
+		} else { $selected = ''; }
 		?>
 		<option value="<?php echo 'Division '.$team->division.' | '.$team->name ?>" <?=$selected?>><?php echo 'Division '.$team->division.' | '.$team->name ?></option>
 	<?php }	?>
@@ -636,7 +669,7 @@ function submit_score($atts) {
     	<p class="error">Incorrect answer to anti-spam math question. Try again.</p>
     <?php } ?>
 
-	<form method="post" action="">
+	<form method="post" action="?">
 		<div class="inputfield">
 			<label for="datetime">Game Date</label>
 			<?php select_date() ?>
@@ -648,7 +681,9 @@ function submit_score($atts) {
 				<?php
 				$diamonds=array(1,2,3,4,5,6,7,8,9,10);
 				foreach ($diamonds as $diamond) {
-					$selected = $_POST['diamond'] == $diamond ? 'selected = "selected"' : ''?>
+					if ( $_GET['diamond'] == $diamond || $_POST['diamond'] == $diamond ) { // if a link was clicked from the games page with a query string or this form was submitted to itself
+						$selected =  'selected = "selected"';
+					} else $selected = '' ?>
 					<option <?php echo $selected ?> value="<?php echo $diamond ?>"><?php echo $diamond ?></option>
 				<?php } ?>
 			</select>
