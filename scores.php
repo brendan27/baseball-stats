@@ -13,7 +13,7 @@ Author URI: http://polluxtechnology.com
 */
 
 global $baseball_stats_db_version;
-$baseball_stats_db_version='1.2';
+$baseball_stats_db_version='1.3';
 
 function baseball_stats_db_check() {
     global $baseball_stats_db_version;
@@ -29,6 +29,7 @@ function baseball_stats_db_install() {
 
 	$table1_name = $wpdb->prefix.'lmsa_games';
 	$table2_name = $wpdb->prefix.'lmsa_teams';
+	$table3_name = $wpdb->prefix.'lmsa_logs';
 
 	$sql1 = "CREATE TABLE $table1_name (
 		id int(4) unsigned NOT NULL AUTO_INCREMENT,
@@ -68,9 +69,27 @@ function baseball_stats_db_install() {
 		PRIMARY KEY  (id)
 	) ENGINE=InnoDB;";
 
+	$sql3 = "CREATE TABLE $table3_name (
+		id int(4) unsigned NOT NULL AUTO_INCREMENT,
+		type varchar(100) DEFAULT NULL,
+		time_submitted timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+		gametime datetime DEFAULT NULL,
+		diamond varchar(100) DEFAULT NULL,
+		home_team varchar(100) DEFAULT NULL,
+		away_team varchar(100) DEFAULT NULL,
+		home_score int(2) DEFAULT NULL,
+		away_score int(2) DEFAULT NULL,
+		home_forfeit varchar(10) DEFAULT NULL,
+		away_forfeit varchar(10) DEFAULT NULL,
+		email_body text,
+		PRIMARY KEY (id)
+	) ENGINE=InnoDB;";
+
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
 	dbDelta( $sql1 );
 	dbDelta( $sql2 );
+	dbDelta( $sql3 );
 
 	update_option('baseball_stats_db_version',$baseball_stats_db_version);
 }
@@ -653,24 +672,25 @@ function select_date($select_name="datetime") {
 		<?php
 		foreach ($dates as $date) {
 
+			$valuedate = date('Y-m-d H:i:s',strtotime($date->datetime));
 			$nicedate = date('D M jS, Y - g:i A',strtotime($date->datetime));
 			$comparedate = date('Y-m-d',strtotime($date->datetime));
 			$today = date('Y-m-d');
 
 			//check to see if the current dropdown item is today (or if the form was submitted with a different date)
 			
-			echo 'get:' . $_GET[$select_name].'<br/>';
-			echo 'db:' . $date->datetime;
+			// echo 'get:' . $_GET[$select_name].'<br/>';
+			// echo 'db:' . $date->datetime;
 
 			if ($_GET[$select_name] == $date->datetime ) {  // if query string contains date
 				$selected = 'selected="selected"';
 			} else if ($_POST[$select_name]) { // if the form has been submitted
-				$selected = $_POST[$select_name] == $nicedate ? 'selected="selected"' : '';
+				$selected = $_POST[$select_name] == $valuedate ? 'selected="selected"' : '';
 			} else { // if today's date has a game date
 				$selected = $comparedate == $today ? 'selected="selected"' : '';
 			}
 			?>
-			<option value="<?php echo $nicedate ?>" <?=$selected?>><?php echo $nicedate ?></option>
+			<option value="<?php echo $valuedate ?>" <?=$selected?>><?php echo $nicedate ?></option>
 		<?php }	?>
 		</select>
 <?php }
@@ -709,6 +729,8 @@ function select_a_team($select_name,$team_id='',$division='') {
 }
 
 function submit_score($atts) {
+	global $wpdb;
+
 	extract(shortcode_atts(array(
 		'email_to' => get_option('admin_email')
     ), $atts));
@@ -720,7 +742,39 @@ function submit_score($atts) {
     	$home_forfeit = $_POST['home_forfeit'] == 'on' ? "YES" : "No";
     	$away_forfeit = $_POST['away_forfeit'] == 'on' ? "YES" : "No";
 
-		$email_body = "Date: ".$_POST['datetime']."\nDiamond: ".$_POST['diamond']."\n\nHome Team: ".$_POST['home_team']."\nHome Score: ".$_POST['home_score']."\nHome Forfeit Checked? ".$home_forfeit."\n\nAway Team: ".$_POST['away_team']."\nAway Score: ".$_POST['away_score']."\nAway Forfeit Checked? ".$away_forfeit;
+    	$strtotime = strtotime($_POST['datetime']);
+    	$nicedate = date('D M jS, Y - g:i A',$strtotime);
+
+		$email_body = "Date: ".$nicedate."\nDiamond: ".$_POST['diamond']."\n\nHome Team: ".$_POST['home_team']."\nHome Score: ".$_POST['home_score']."\nHome Forfeit Checked? ".$home_forfeit."\n\nAway Team: ".$_POST['away_team']."\nAway Score: ".$_POST['away_score']."\nAway Forfeit Checked? ".$away_forfeit;
+
+		// LOG SUBMISSION TO DB IN CASE OF EMAIL FAILURE OR ANYTHING
+		$wpdb->insert(
+			$wpdb->prefix.'lmsa_logs',
+			array(
+				'type'=>'submit-score-log', //string
+				'gametime'=>stripslashes_deep($_POST['datetime']), //string
+				'diamond'=>stripslashes_deep($_POST['diamond']), //string
+				'home_team'=>stripslashes_deep($_POST['home_team']), //string
+				'away_team'=>stripslashes_deep($_POST['away_team']), //string
+				'home_score'=>stripslashes_deep($_POST['home_score']), //integer
+				'away_score'=>stripslashes_deep($_POST['away_score']), //integer
+				'home_forfeit'=>stripslashes_deep($home_forfeit), //string
+				'away_forfeit'=>stripslashes_deep($away_forfeit), //string
+				'email_body'=>stripslashes_deep($email_body) //string
+			),
+			array(
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%d',
+				'%d',
+				'%s',
+				'%s',
+				'%s'
+			)
+		);
 
     	$success = mail($to, $subject, $email_body);
     	if ($success) { ?>
