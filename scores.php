@@ -675,7 +675,7 @@ function select_date($select_name="datetime") {
 			$valuedate = date('Y-m-d H:i:s',strtotime($date->datetime));
 			$nicedate = date('D M jS, Y - g:i A',strtotime($date->datetime));
 			$comparedate = date('Y-m-d',strtotime($date->datetime));
-			$today = date('Y-m-d');
+			$today = date_i18n('Y-m-d');
 
 			//check to see if the current dropdown item is today (or if the form was submitted with a different date)
 			
@@ -752,6 +752,7 @@ function submit_score($atts) {
 			$wpdb->prefix.'lmsa_logs',
 			array(
 				'type'=>'submit-score-log', //string
+				'time_submitted'=>date_i18n('Y-m-d H:i:s'), //string
 				'gametime'=>stripslashes_deep($_POST['datetime']), //string
 				'diamond'=>stripslashes_deep($_POST['diamond']), //string
 				'home_team'=>stripslashes_deep($_POST['home_team']), //string
@@ -763,6 +764,7 @@ function submit_score($atts) {
 				'email_body'=>stripslashes_deep($email_body) //string
 			),
 			array(
+				'%s',
 				'%s',
 				'%s',
 				'%s',
