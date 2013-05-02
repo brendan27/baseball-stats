@@ -65,7 +65,7 @@ function baseball_stats_db_install() {
 		rf int(4) DEFAULT NULL,
 		ra int(4) DEFAULT NULL,
 		rfa int(4) DEFAULT NULL,
-		pct decimal(3,3) DEFAULT NULL,
+		pct decimal(4,3) DEFAULT NULL,
 		PRIMARY KEY  (id)
 	) ENGINE=InnoDB;";
 
@@ -517,7 +517,7 @@ function print_standings($atts) {
 					<td class="textalignright"><?=$team->ra?></td>
 					<td class="textalignright"><?=$team->rfa?></td>
 					<td class="textalignright"><?=$team->pts?></td>
-					<td class="textalignright"><?=$team->pct?></td>
+					<td class="textalignright"><?=ltrim($team->pct, '0')?></td>
 				</tr>
 				<?php
 			}
