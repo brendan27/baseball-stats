@@ -13,7 +13,7 @@ Author URI: http://polluxtechnology.com
 */
 
 global $baseball_stats_db_version;
-$baseball_stats_db_version='1.3';
+$baseball_stats_db_version='1.4';
 
 function baseball_stats_db_check() {
     global $baseball_stats_db_version;
