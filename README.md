@@ -19,8 +19,8 @@ To Use
 
 The following shortcodes are used to display content:
 
-* [print_teams division="A"] - attribute: division is required
-* [print_scores division="A"] - attribute: division is required
-* [print_standings division="A"] - attribute: division is required
-* [division_leaders] - no required attributes. This shortcode displays a table of leaders for each division.
-* [submit_score email_to="email@website.com"] - attribute: email_to defaults to the WP site admin.
+* [print_teams division="A"] - attribute: division is required (http://lethmixedslowpitch.com/teams/)
+* [print_scores division="A"] - attribute: division is required (http://lethmixedslowpitch.com/games/)
+* [print_standings division="A"] - attribute: division is required (http://lethmixedslowpitch.com/standings/)
+* [division_leaders] - no required attributes. This shortcode displays a table of leaders for each division. (http://lethmixedslowpitch.com - sidebar)
+* [submit_score email_to="email@website.com"] - attribute: email_to defaults to the WP site admin. (http://lethmixedslowpitch.com/games/submit-score/)
