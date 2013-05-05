@@ -66,8 +66,9 @@ class Teams_List_Table extends WP_List_Table {
 
 	    /* -- Check division in query string -- */
 
-		    $filterdivision = !empty($_GET["div"]) ? $wpdb->prefix.'lmsa_teams.division = "'.mysql_real_escape_string($_GET["div"]) : '';
-		    if(!empty($filterdivision)){ $query.=', '.$wpdb->prefix.'WHERE '.$filterdivision; }
+		    $filterdivision = !empty($_GET["div"]) ? $wpdb->prefix.'lmsa_teams.division = "'.mysql_real_escape_string($_GET["div"]).'"' : '';
+		    if(!empty($filterdivision)){ $query.=' WHERE '.$filterdivision; }
+		    echo $query;
 
 		/* -- Ordering parameters -- */
 		    //Parameters that are going to be used to order the result
