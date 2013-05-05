@@ -502,7 +502,7 @@ function print_standings($atts) {
 			$pre = $wpdb->prefix.$lmsa_prefix;
 			
 			//select everything from the games table, where the division (retrieved from home team in teams table) is equal to the division set in the shortcode attribute
-			$teams_query = 'SELECT * FROM '.$pre.'teams WHERE division = "'.$division.'" ORDER BY pts DESC';
+			$teams_query = 'SELECT * FROM '.$pre.'teams WHERE division = "'.$division.'" ORDER BY pts DESC, gp ASC, w DESC, rfa DESC';
 
 			// loop through teams in division
 			$teams = $wpdb->get_results($teams_query,OBJECT);
@@ -645,7 +645,7 @@ function division_leaders() {
 						<td><?=$division->division?></td>
 						<td>
 							<?php
-							$leader_query = 'SELECT name, pts FROM '.$wpdb->prefix.'lmsa_teams WHERE pts = (SELECT MAX(pts) FROM '.$wpdb->prefix.'lmsa_teams WHERE division = "'.$division->division.'") AND division = "'.$division->division.'"';
+							$leader_query = 'SELECT name, pts FROM '.$wpdb->prefix.'lmsa_teams WHERE pts = (SELECT MAX(pts) FROM '.$wpdb->prefix.'lmsa_teams WHERE division = "'.$division->division.'") AND division = "'.$division->division.'" ORDER BY pts DESC, gp ASC, w DESC, rfa DESC';
 							$leaders = $wpdb->get_results($leader_query,OBJECT);
 							//loop through in case there is more than 1 team tied for first.
 							foreach($leaders as $leader) { 
