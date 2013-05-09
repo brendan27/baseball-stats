@@ -670,8 +670,11 @@ function select_date($select_name="datetime") {
 		<select id="<?php echo $select_name ?>" name="<?php echo $select_name ?>">
 			<option value="">-- Select a Gametime --</option>
 		<?php
+		$selectedcount=0;
+
 		foreach ($dates as $date) {
 
+			$selected='';
 			$valuedate = date('Y-m-d H:i:s',strtotime($date->datetime));
 			$nicedate = date('D M jS, Y - g:i A',strtotime($date->datetime));
 			$comparedate = date('Y-m-d',strtotime($date->datetime));
@@ -682,12 +685,27 @@ function select_date($select_name="datetime") {
 			// echo 'get:' . $_GET[$select_name].'<br/>';
 			// echo 'db:' . $date->datetime;
 
-			if ($_GET[$select_name] == $date->datetime ) {  // if query string contains date
-				$selected = 'selected="selected"';
-			} else if ($_POST[$select_name]) { // if the form has been submitted
-				$selected = $_POST[$select_name] == $valuedate ? 'selected="selected"' : '';
-			} else { // if today's date has a game date
-				$selected = $comparedate == $today ? 'selected="selected"' : '';
+			//Make sure there isn't already an option selected
+			if ($selectedcount<=0) {
+
+				// if query string date matches
+				if ($_GET[$select_name] == $date->datetime ) {
+					$selected = 'selected="selected"';
+					$selectedcount++;
+				}
+
+				// if there is no query string $datetime and the form has been submitted
+				if (!$_GET[$select_name] && $_POST[$select_name] == $valuedate) {
+					$selected = 'selected="selected"';
+					$selectedcount++;
+				}
+
+				// if there is no query string $datetime, no form submission, and there is a game date for today's date
+				if (!$_GET[$select_name] && !$_POST[$select_name] && $comparedate == $today) {
+					$selected = 'selected="selected"';
+					$selectedcount++;
+				}
+
 			}
 			?>
 			<option value="<?php echo $valuedate ?>" <?=$selected?>><?php echo $nicedate ?></option>
@@ -790,55 +808,61 @@ function submit_score($atts) {
     	<p class="error">Incorrect answer to anti-spam math question. Try again.</p>
     <?php } ?>
 
-	<form method="post" action="?">
-		<div class="inputfield">
-			<label for="datetime">Game Date</label>
-			<?php select_date() ?>
-		</div>
-		<div class="inputfield">
-			<label for="diamond">Diamond</label>
-			<select name="diamond" id="diamond">
-				<option value="">-- Select a Diamond --</option>
-				<?php
-				$diamonds=array(1,2,3,4,5,6,7,8,9,10);
-				foreach ($diamonds as $diamond) {
-					if ( $_GET['diamond'] == $diamond || $_POST['diamond'] == $diamond ) { // if a link was clicked from the games page with a query string or this form was submitted to itself
-						$selected =  'selected = "selected"';
-					} else $selected = '' ?>
-					<option <?php echo $selected ?> value="<?php echo $diamond ?>"><?php echo $diamond ?></option>
-				<?php } ?>
-			</select>
-		</div>
-		<div class="inputfield">
-			<label for="home_team">Home Team</label>
-			<?php select_a_team("home_team") ?>
-		</div>
+	<?php
+	//if the form has not been successfully submitted, display it:
+	if (!$success) {
+	?>
+	
+		<form method="post" action="?">
+			<div class="inputfield">
+				<label for="datetime">Game Date</label>
+				<?php select_date() ?>
+			</div>
+			<div class="inputfield">
+				<label for="diamond">Diamond</label>
+				<select name="diamond" id="diamond">
+					<option value="">-- Select a Diamond --</option>
+					<?php
+					$diamonds=array(1,2,3,4,5,6,7,8,9,10);
+					foreach ($diamonds as $diamond) {
+						if ( $_GET['diamond'] == $diamond || $_POST['diamond'] == $diamond ) { // if a link was clicked from the games page with a query string or this form was submitted to itself
+							$selected =  'selected = "selected"';
+						} else $selected = '' ?>
+						<option <?php echo $selected ?> value="<?php echo $diamond ?>"><?php echo $diamond ?></option>
+					<?php } ?>
+				</select>
+			</div>
+			<div class="inputfield">
+				<label for="home_team">Home Team</label>
+				<?php select_a_team("home_team") ?>
+			</div>
 
-		<div class="inputfield">
-			<label for="home_score">Home Score</label>
-			<input type="number" id="home_score" name="home_score" value="<?php echo $_POST['home_score'] ?>" style="width:50px"/>
-			<input <?php if ($_POST['home_forfeit'] == "on") { echo 'checked="checked"'; } ?> type="checkbox" id="home_forfeit" name="home_forfeit"/> <label for="home_forfeit">Forfeit/No show</label>
-		</div>
+			<div class="inputfield">
+				<label for="home_score">Home Score</label>
+				<input type="number" id="home_score" name="home_score" value="<?php echo $_POST['home_score'] ?>" style="width:50px"/>
+				<input <?php if ($_POST['home_forfeit'] == "on") { echo 'checked="checked"'; } ?> type="checkbox" id="home_forfeit" name="home_forfeit"/> <label for="home_forfeit">Forfeit/No show</label>
+			</div>
 
-		<div class="inputfield">
-			<label for="away_team">Away Team</label>
-			<?php select_a_team("away_team") ?>
-		</div>
-		<div class="inputfield">
-			<label for="away_score">Away Score</label>
-			<input type="number" id="away_score" name="away_score" value="<?php echo $_POST['away_score'] ?>" style="width:50px"/>
-			<input <?php if ($_POST['away_forfeit'] == "on") { echo 'checked="checked"'; } ?> type="checkbox" id="away_forfeit" name="away_forfeit"/> <label for="away_forfeit">Forfeit/No show</label>
-		</div>
-		<div class="inputfield">
-			<label for="math_entry"><?php echo $num1 = rand(1,9).' + '. $num2 = rand(1,9).' =' ?></label>
-			<input type="hidden" name="math_answer" value="<?php echo ($num1 + $num2) ?>"/>
-			<input type="number" id="math_entry" name="math_entry" style="width:50px"/>
-		</div>
-		<div class="inputfield">
-			<input name="submit_score" type="submit" value="Submit Score"/>
-		</div>
+			<div class="inputfield">
+				<label for="away_team">Away Team</label>
+				<?php select_a_team("away_team") ?>
+			</div>
+			<div class="inputfield">
+				<label for="away_score">Away Score</label>
+				<input type="number" id="away_score" name="away_score" value="<?php echo $_POST['away_score'] ?>" style="width:50px"/>
+				<input <?php if ($_POST['away_forfeit'] == "on") { echo 'checked="checked"'; } ?> type="checkbox" id="away_forfeit" name="away_forfeit"/> <label for="away_forfeit">Forfeit/No show</label>
+			</div>
+			<div class="inputfield">
+				<label for="math_entry"><?php echo $num1 = rand(1,9).' + '. $num2 = rand(1,9).' =' ?></label>
+				<input type="hidden" name="math_answer" value="<?php echo ($num1 + $num2) ?>"/>
+				<input type="number" id="math_entry" name="math_entry" style="width:50px"/>
+			</div>
+			<div class="inputfield">
+				<input name="submit_score" type="submit" value="Submit Score"/>
+			</div>
 
-	</form>
+		</form>
+	<?php } ?>
 <?php }
 add_shortcode('submit_score','submit_score');
 
