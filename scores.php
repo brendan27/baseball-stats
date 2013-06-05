@@ -13,7 +13,7 @@ Author URI: http://polluxtechnology.com
 */
 
 global $baseball_stats_db_version;
-$baseball_stats_db_version='1.4';
+$baseball_stats_db_version='1.5';
 
 function baseball_stats_db_check() {
     global $baseball_stats_db_version;
@@ -40,6 +40,7 @@ function baseball_stats_db_install() {
 		home_score int(2) DEFAULT NULL,
 		away_score int(2) DEFAULT NULL,
 		forfeit tinyint(1) DEFAULT '0',
+		rescheduled tinyint(1) DEFAULT '0',
 		deleted timestamp NULL DEFAULT NULL,
 		PRIMARY KEY  (id)
 	) ENGINE=InnoDB;";
@@ -332,6 +333,11 @@ function print_games($atts) {
 					if( current_user_can( 'edit_posts' ) ) {
 						$edit_btn='<br/><a href="' . admin_url('admin.php?page=scores-admin&edit=1&id=' . $game->id) . '">[Edit Game/Enter Score]</a>';
 					}
+					
+					$rescheduled='';
+					if ($game->rescheduled) {
+						$rescheduled = '<br/><em>Rescheduled</em>';
+					}
 
 					$submit_score_link=''; //reset
 
@@ -347,7 +353,7 @@ function print_games($atts) {
 					?>
 					
 					<tr>
-						<td><?php echo date('D M jS, g:i A',strtotime($game->datetime)) . ' ' . $submit_score_link . $edit_btn; ?></td>
+						<td><?php echo date('D M jS, g:i A',strtotime($game->datetime)) . ' ' . $submit_score_link . $rescheduled . $edit_btn; ?></td>
 						<td><?=$game->diamond?></td>
 						<td<?=isset($home_win) ? ' class="win"' : ''?>><?php if (! isset($_GET['team'])) { ?><a href="<?php echo the_permalink() ?>?team=<?php echo $game->home_team; ?>"><?php } ?><?php echo $home_name ?><?php if (! isset($_GET['team'])) { ?></a><?php } ?><span class="alignright"><?php echo $game->home_score ?><span></td>
 						<td<?=isset($away_win) ? ' class="win"' : ''?>><?php if (! isset($_GET['team'])) { ?><a href="<?php echo the_permalink() ?>?team=<?php echo $game->away_team; ?>"><?php } ?><?php echo $away_name ?><?php if (! isset($_GET['team'])) { ?></a><?php } ?><span class="alignright"><?php echo $game->away_score?></span></td>
@@ -424,6 +430,7 @@ function generate_standings() {
 
 			$rf+=$us;
 			$ra+=$them;
+
 		}
 		
 		$gp=$w+$l+$t;

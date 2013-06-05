@@ -232,6 +232,10 @@ function edit_game_form($game_id=false) {
 				        <th><label for="away_score">Away Score</label></th>
 				        <td><input id="away_score" type="number" name="away_score" value="<?=$game->away_score?>" /></td>    
 		            </tr>
+		        	<tr class="form-field">
+				        <th><label for="rescheduled">Rescheduled</label></th>
+				        <td><input <?php if ($game->rescheduled === "1") { echo 'checked="checked"'; } ?> type="checkbox" id="rescheduled" name="rescheduled"/></td>    
+		            </tr>
 		    </table>
 
 			<?php if ($_GET['edit']==1) { ?>
@@ -247,37 +251,52 @@ function edit_game_form($game_id=false) {
 }
 
 function edit_game() {
-	//TODO: wpdb seems to be preventing NULL from being inserted. Instead we get '0'
 	global $wpdb;
 
 	$home_score=!empty($_POST['home_score'])?$_POST['home_score']:'NULL';
 	$away_score=!empty($_POST['away_score'])?$_POST['away_score']:'NULL';
+	$rescheduled=$_POST['rescheduled']=="on"?'1':'0';
 		
-	$success = $wpdb->update(
-		$wpdb->prefix.'lmsa_games',
-		array(
-			'datetime'=>$_POST['datetime'], //string
-			'diamond'=>$_POST['diamond'], //integer
-			'home_team'=>$_POST['home_team'], //integer
-			'home_score'=>$home_score, //integer or null
-			'away_team'=>$_POST['away_team'], //integer
-			'away_score'=>$away_score //integer or null
-		),
-		array(
-			'id'=>$_POST['id'] //integer
-		),
-		array(
-			'%s',
-			'%d',
-			'%d',
-			'%d',
-			'%d',
-			'%d',
-		),
-		array(
-			'%d'
-		)
+	// $success = $wpdb->update(
+	// 	$wpdb->prefix.'lmsa_games',
+	// 	array(
+	// 		'datetime'=>$_POST['datetime'], //string
+	// 		'diamond'=>$_POST['diamond'], //integer
+	// 		'home_team'=>$_POST['home_team'], //integer
+	// 		'home_score'=>$home_score, //integer or null
+	// 		'away_team'=>$_POST['away_team'], //integer
+	// 		'away_score'=>$away_score, //integer or null
+	// 		'rescheduled'=>$rescheduled //integer
+	// 	),
+	// 	array(
+	// 		'id'=>$_POST['id'] //integer
+	// 	),
+	// 	array(
+	// 		'%s',
+	// 		'%d',
+	// 		'%d',
+	// 		'%d',
+	// 		'%d',
+	// 		'%d',
+	// 		'%d'
+	// 	),
+	// 	array(
+	// 		'%d'
+	// 	)
+	// );
+
+	$success = $wpdb->query(
+		'UPDATE ' . $wpdb->prefix.'lmsa_games SET 
+			datetime = "' . $_POST['datetime'] . '" , 
+			diamond = ' . $_POST['diamond'] . ' , 
+			home_team = ' . $_POST['home_team'] . ' , 
+			home_score = ' . $home_score . ' , 
+			away_team = ' . $_POST['away_team'] . ' ,
+			away_score = ' . $away_score . ' , 
+			rescheduled = ' . $rescheduled . 
+		' WHERE id = ' . $_POST['id']
 	);
+
 
 	return $success;
 }
